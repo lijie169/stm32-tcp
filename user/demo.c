@@ -9,7 +9,7 @@ char packets[] ={
 u8 len = sizeof(packets);
 extern  uint16_t current_clock ;
 
-
+//extern void my_udp_init(void);
 
 void delay(uint32_t nCount)		 //????for??nCount?,????????
 {

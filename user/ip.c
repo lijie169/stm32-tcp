@@ -113,9 +113,9 @@ void ip_process(void) {
     case ICMP_PROTOCOL:
       icmp_process(len);
       break;
-    //case UDP_PROTOCOL:
-      //udp_process(len);	 Not Yet Implemented...
-      //break;
+    case UDP_PROTOCOL:
+      udp_process(len);	 //Not Yet Implemented...
+      break;
     //case TCP_PROTOCOL:
       //tcp_process(len);	 Not Yet Implemented...
       //break;

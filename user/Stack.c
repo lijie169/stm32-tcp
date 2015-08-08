@@ -15,7 +15,7 @@ For more information and updates, please visit www.embeddedinternet.org
   #include "ethernet.h"
   #include "arp.h"
 #endif
-
+#include "udp.h"
 
 void stack_init(void) {
 
@@ -24,6 +24,8 @@ void stack_init(void) {
     arp_init();		
     arp_request(Gateway);
   #endif
+  	udp_init();
+  	my_udp_init();
 }
 
 

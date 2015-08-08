@@ -1,5 +1,5 @@
 /******************************************************************************************
-   Stack.h (v1.0)
+   udp.h (v1.0)
 -------------------------------------------------------------------------------------
 This code is from the book:
 "Embedded Internet: TCP/IP Basics, Implementation and Applications" by Sergio Scaglia
@@ -10,21 +10,26 @@ purposes.  For commercial use, please contact me at sscaglia@intramarket.com.ar
 For more information and updates, please visit www.embeddedinternet.org
 ******************************************************************************************/
 
-#ifndef __stack_H
-#define __stack_H
-#define  ETHERNET
+#ifndef __udp_H
+#define __udp_H
 
-#define UDP_DATA_START  (DATALINK_HDR_SIZE + 20 + 8)				// sizeof(struct ip_hdr)=20 ; sizeof(struct udp_hdr)=8
-#define UDP_DATA_MAX    (PACKET_BUF_SIZE - DATALINK_HDR_SIZE - 20 - 8)    	// sizeof(struct ip_hdr)=20 ; sizeof(struct udp_hdr)=8
 
-#define PACKET_BUF_SIZE	1514
-#define DATALINK_HDR_SIZE     14
+#define UDP_MAX_SOCKETS		    3	
+#define UDP_INVALID_SOCKET          -1
+#define UDP_PORT_ALREADY_USED       -2
+#define UDP_SOCKET_ERROR	    -3
 
-extern char rx_buf[];
-extern char tx_buf[];
-void stack_init(void);
-void stack_process(void);
+#define UDP_CHKSUM_NONE		    0
+#define UDP_CHKSUM_SEND		    1
 
+#define UDP_EVENT_DATA	            1
+
+void udp_init(void);
+void udp_process(unsigned short len);
+int  udp_open_socket(unsigned short, char, void (*event_handler)(int,char,char*,unsigned short,unsigned short,unsigned short));
+void udp_close_socket(int socket);
+void udp_send(int, char *, unsigned short, unsigned short);
+int udp_get_port(int socket);
 
 #endif
 
