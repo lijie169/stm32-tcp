@@ -30,6 +30,7 @@ void ethernet_poll(void);
 void frame_process(void);
 int frame_get(void);
 void ethernet_send(unsigned short protocol, unsigned short len);
+int vprintf(char* fmt,...);
 #endif
 
 

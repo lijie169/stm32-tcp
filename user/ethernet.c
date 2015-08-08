@@ -53,7 +53,7 @@ void frame_process(void) {
       arp_process();
       break;
     case IP_PROTOCOL:
-      //  ip_process();
+        ip_process();
       break;
   }
 }
@@ -68,7 +68,8 @@ void ethernet_init(void)
 	enc28j60_init(MyMAC);
 }
 
-int printf(char* fmt,...)
+int vprintf(char* fmt,...)
 {
+
 	return 0 ;
 }
