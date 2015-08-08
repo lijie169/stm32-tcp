@@ -255,7 +255,7 @@ void enc28j60_writephy(unsigned char address, unsigned int data)
 */
 void enc28j60_init(unsigned char* mac_addr)
 {
-	unsigned char tmp ;
+
 	int time ;
 	#if 0
     GPIO_InitTypeDef GPIO_InitStructure;  
@@ -274,7 +274,7 @@ void enc28j60_init(unsigned char* mac_addr)
 	enc28j60_writeop(ENC28J60_SOFT_RESET, 0, ENC28J60_SOFT_RESET); 
     /* 查询ESTAT.CLKRDY位 */
 	for (time = 50000; time > 0; time--);
-	while(!((tmp = enc28j60_read(ESTAT)) & ESTAT_CLKRDY));
+	while(!((enc28j60_read(ESTAT)) & ESTAT_CLKRDY));
     
 	/* 设置接收缓冲区起始地址 该变量用于每次读取缓冲区时保留下一个包的首地址 */
 	next_pkt = RXSTART_INIT;

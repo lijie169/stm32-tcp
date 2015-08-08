@@ -23,7 +23,8 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f10x_it.h"
-
+extern void Led_Shine(void);
+extern   uint16_t current_clock ;
 /** @addtogroup STM32F10x_StdPeriph_Template
   * @{
   */
@@ -134,6 +135,15 @@ void PendSV_Handler(void)
   */
 void SysTick_Handler(void)
 {
+	static uint8_t count = 0 ;
+	count++;
+	if(count >= 50)
+	{
+		Led_Shine();
+		count = 0 ;
+	}
+	current_clock++;
+
 }
 
 /******************************************************************************/

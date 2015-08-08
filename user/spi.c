@@ -3,6 +3,8 @@
 #include "stm32f10x_gpio.h"
 #include "stm32f10x_rcc.h"
 #include "stm32f10x_usart.h"
+
+
 void Usart2_Init( uint32_t BaudRate)
 {
   
@@ -43,7 +45,25 @@ void Usart2_Init( uint32_t BaudRate)
 }
 					  
 //串行外设接口SPI的初始化，SPI配置成主模式							  
+void Led_Init(void)
+{
+	GPIO_InitTypeDef GPIO_InitStructure;
+	
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOF, ENABLE);
+	
+	GPIO_InitStructure.GPIO_Pin =  GPIO_Pin_6;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+	GPIO_Init(GPIOF, &GPIO_InitStructure);
+	GPIO_SetBits(GPIOF,GPIO_Pin_6);
+}
 
+void Led_Shine(void)
+{
+	static uint8_t state = 0 ;
+	GPIO_WriteBit(GPIOF,GPIO_Pin_6,state);
+	state = !state ;
+}
 void SPIx_Init(void)
 {
 	SPI_InitTypeDef  SPI_InitStructure;
@@ -61,7 +81,7 @@ void SPIx_Init(void)
 	//SPI1 NSS 
 	#if 1
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4;
-    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_10MHz;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
     GPIO_Init(GPIOC, &GPIO_InitStructure);
 
