@@ -30,6 +30,6 @@ int  udp_open_socket(unsigned short, char, void (*event_handler)(int,char,char*,
 void udp_close_socket(int socket);
 void udp_send(int, char *, unsigned short, unsigned short);
 int udp_get_port(int socket);
-
+void my_udp_init(void);
 #endif
 

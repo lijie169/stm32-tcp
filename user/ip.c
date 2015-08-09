@@ -116,9 +116,9 @@ void ip_process(void) {
     case UDP_PROTOCOL:
       udp_process(len);	 //Not Yet Implemented...
       break;
-    //case TCP_PROTOCOL:
-      //tcp_process(len);	 Not Yet Implemented...
-      //break;
+    case TCP_PROTOCOL:
+      tcp_process(len);	 //Not Yet Implemented...
+      break;
     default:				  // send Protocol Unreachable ICMP message
       i = ICMP_DATA_START;
       // Copy original IP header + first 8 bytes of IP Data

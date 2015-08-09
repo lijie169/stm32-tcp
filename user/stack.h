@@ -16,6 +16,9 @@ For more information and updates, please visit www.embeddedinternet.org
 
 #define UDP_DATA_START  (DATALINK_HDR_SIZE + 20 + 8)				// sizeof(struct ip_hdr)=20 ; sizeof(struct udp_hdr)=8
 #define UDP_DATA_MAX    (PACKET_BUF_SIZE - DATALINK_HDR_SIZE - 20 - 8)    	// sizeof(struct ip_hdr)=20 ; sizeof(struct udp_hdr)=8
+#define TCP_DATA_START  (DATALINK_HDR_SIZE + 20 + 20)   			// sizeof(struct ip_hdr)=20 ; sizeof(struct tcp_hdr)=20
+#define TCP_DATA_MAX    (PACKET_BUF_SIZE - DATALINK_HDR_SIZE - 20 - 20)   	// sizeof(struct ip_hdr)=20 ; sizeof(struct tcp_hdr)=20
+
 
 #define PACKET_BUF_SIZE	1514
 #define DATALINK_HDR_SIZE     14

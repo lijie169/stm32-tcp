@@ -16,6 +16,7 @@ For more information and updates, please visit www.embeddedinternet.org
   #include "arp.h"
 #endif
 #include "udp.h"
+#include "tcp.h"
 
 void stack_init(void) {
 
@@ -26,6 +27,8 @@ void stack_init(void) {
   #endif
   	udp_init();
   	my_udp_init();
+	tcp_init();
+	my_tcp_service_init();
 }
 
 
@@ -34,4 +37,5 @@ void stack_process(void) {
     ethernet_poll();
     arp_poll();
   #endif
+    tcp_poll();
 }
