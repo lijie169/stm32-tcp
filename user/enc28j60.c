@@ -243,6 +243,39 @@ void enc28j60_writephy(unsigned char address, unsigned int data)
 	while( enc28j60_read(MISTAT) & MISTAT_BUSY );
 }
 
+unsigned int  enc28j60_readphy(unsigned char address)
+{
+	unsigned int  data = 0 ;
+	unsigned short idx = 0 ;
+	/* 向MIREGADR写入地址 详见数据手册19页*/
+	enc28j60_write(MIREGADR, address);
+
+	/*
+		read from spec.
+		enc28j60_write(MICMD,enc28j60_read(MICMD)|1)
+		enc28j60_write(MISTAT,enc28j60_read(MISTAT)|1)
+	*/
+	/*read 位置1*/
+	//enc28j60_write(MICMD, MICMD_MIIRD);
+	enc28j60_write(MICMD,enc28j60_read(MICMD)|MICMD_MIIRD);
+	/*busy 位置1*/
+	//enc28j60_write(MISTAT, MISTAT_BUSY);
+	enc28j60_write(MISTAT,enc28j60_read(MISTAT)|MISTAT_BUSY);
+	//for(;idx<1000;idx++);
+	/*等待busy位清零*/
+	while( enc28j60_read(MISTAT) & MISTAT_BUSY );
+	/*read位 手动清零*/
+	enc28j60_write(MICMD, enc28j60_read(MICMD)&(~MICMD_MIIRD));
+	/* 读入高8位数据 */
+	data = enc28j60_read(MIRDH);
+	data <<= 8 ;
+    /* 读入低8位数据 */
+	data |= enc28j60_read(MIRDL);
+	/* 等待PHY寄存器写入完成 */
+	return data;
+}
+
+
 /*
 ********************************************************************************
 * 函 数 名: enc28j60_init
@@ -369,9 +402,20 @@ void enc28j60_init(unsigned char* mac_addr)
 */
 void enc28j60_packet_send(char* packet,int len )
 {
+	short i ;
 	/* 查询发送逻辑复位位 */
 	while((enc28j60_read(ECON1) & ECON1_TXRTS)!= 0);
-    
+
+	if( (enc28j60_read(EIR) & EIR_TXERIF) )
+	{
+		enc28j60_setbank(ECON1);
+        enc28j60_writeop(ENC28J60_BIT_FIELD_SET, ECON1, ECON1_TXRST);
+		for(i = 0 ; i < 20000 ; i++);
+        enc28j60_writeop(ENC28J60_BIT_FIELD_CLR, ECON1, ECON1_TXRST);
+    }
+
+
+	
     /* 设置发送缓冲区起始地址 */    
 	enc28j60_write(EWRPTL, TXSTART_INIT & 0xFF);
 	enc28j60_write(EWRPTH, TXSTART_INIT >> 8);
@@ -392,8 +436,14 @@ void enc28j60_packet_send(char* packet,int len )
     /* 复位发送逻辑的问题。参见 Rev. B4 Silicon Errata point 12. */
 	if( (enc28j60_read(EIR) & EIR_TXERIF) )
 	{
+		/**
 		enc28j60_setbank(ECON1);
-        enc28j60_writeop(ENC28J60_BIT_FIELD_CLR, ECON1, ECON1_TXRTS);
+        enc28j60_writeop(ENC28J60_BIT_FIELD_SET, ECON1, ECON1_TXRST);
+		for(i = 0 ; i < 20000 ; i++);
+        enc28j60_writeop(ENC28J60_BIT_FIELD_CLR, ECON1, ECON1_TXRST);
+        **/
+        enc28j60_writeop(ENC28J60_BIT_FIELD_CLR, EIR, EIR_TXERIF);
+        enc28j60_writeop(ENC28J60_BIT_FIELD_CLR, ESTAT, ESTAT_TXABRT);
     }
 }
 
@@ -438,14 +488,21 @@ void enc28j60_init_send(int len)
 */
 void enc28j60_start_send( void )
 {
+	 short i ;
 	/* 启动发送 */
 	enc28j60_writeop(ENC28J60_BIT_FIELD_SET, ECON1, ECON1_TXRTS);
-    
+   
     /* 复位发送逻辑的问题。参见 Rev. B4 Silicon Errata point 12. */
 	if( (enc28j60_read(EIR) & EIR_TXERIF) )
 	{
+		/*
 		enc28j60_setbank(ECON1);
-        enc28j60_writeop(ENC28J60_BIT_FIELD_CLR, ECON1, ECON1_TXRTS);
+        enc28j60_writeop(ENC28J60_BIT_FIELD_SET, ECON1, ECON1_TXRST);
+		for(i = 0 ; i < 10000 ; i++);
+        enc28j60_writeop(ENC28J60_BIT_FIELD_CLR, ECON1, ECON1_TXRST);
+        */
+        enc28j60_writeop(ENC28J60_BIT_FIELD_CLR, EIR, EIR_TXERIF);
+        enc28j60_writeop(ENC28J60_BIT_FIELD_CLR, ESTAT, ESTAT_TXABRT);
     }
 }
 

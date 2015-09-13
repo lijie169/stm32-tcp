@@ -108,7 +108,8 @@ static short test_data_len = 11 ;
 /***************************************/
 /*   TCP Private Functions             */
 /***************************************/
-#if debug_tcp
+
+static uint8_t debug_tcp = 0 ;
 
 void tcp_display(void) {
   int i;
@@ -142,16 +143,16 @@ void tcp_display(void) {
   }
   printf("\n-------------------------------------------\n");
 }
-#endif //debug_tcp
+ //debug_tcp
 
 
 int tcp_validate_socket(int socket) {
 
   if ((socket < 1) || (socket > TCP_MAX_SOCKETS)) {
-    #if debug_tcp
+    
 
 	printf("TCP: Invalid Socket Error!\r\n");
-	#endif
+	
     return TCP_INVALID_SOCKET;
   }
   return 0;
@@ -181,11 +182,11 @@ void tcp_send(int socket, unsigned short len) {
   if (tcp_validate_socket(socket) == TCP_INVALID_SOCKET)
     return;
   if (tcp_socket[iSocket].state == TCP_SOCKET_FREE) {
-    #if debug_tcp
+    
 
 	printf("TCP Send: the socket is free: %d\n", socket);
 
-    #endif
+    
     return;
   }
   switch (tcp_socket[iSocket].state) {
@@ -254,11 +255,11 @@ void tcp_resend(int socket) {
     tcp_socket[iSocket].more_data = tcp_socket[iSocket].fill_buffer(socket, &tcp_socket[iSocket].position, &len);
     len = tcp_socket[iSocket].sndnxt - tcp_socket[iSocket].snduna;
     tcp_socket[iSocket].sndnxt = tcp_socket[iSocket].snduna;
-    #if debug_tcp
+    
 	
-	printf("Resending...\r\n");
+	printf("%d Resending...\r\n",socket);
+	tcp_socket_show(socket);
 	
-	#endif
     tcp_send(socket, len);
     return;
   }
@@ -612,10 +613,10 @@ void tcp_process_segment(int socket) {
       break;
 
     default:
-      #if debug_tcp
+      
 
 	printf("Unknown State %d\n", pSocket->state);
-	#endif
+	
       break;
   }
 }
@@ -709,10 +710,10 @@ void tcp_process(unsigned short len) {
   opt_len = (((TCPr->data_offset)>>4)*4) - sizeof(struct tcp_hdr);
   data_len = HTONS(IPr->len) - sizeof(struct ip_hdr)  - sizeof(struct tcp_hdr) - opt_len;
 
-#if debug_tcp
 
+  if(debug_tcp)
   tcp_display();
-#endif //debug_tcp
+ //debug_tcp
 
   chksum1 = HTONS(TCPr->tcpchksum);
   memcpy(&p_hdr.srcipaddr[0], &IPr->srcipaddr[0], 4);
@@ -725,10 +726,9 @@ void tcp_process(unsigned short len) {
   TCPr->tcpchksum = 0;
   chksum2 = chksum16(&TCPr->srcport,len, chksum2, 1);
   if (chksum2 != chksum1) {
-    #if debug_tcp
+
 
 	printf("TCP: Bad Checksum %04x (it should be %04x)\n",chksum1, chksum2);
-	#endif
     return;											// returns if chksum failed!
   }
   TCPr->tcpchksum = HTONS(chksum1);			        // restore checksum
@@ -778,10 +778,10 @@ void tcp_process(unsigned short len) {
     }
   }
   // If we are here, the Port is unreachable...Send an ICMP informing that !
-  #if debug_tcp
+  
 
 	printf("Destination Port %d not found!\n", HTONS(TCPr->destport));
-	#endif
+	
   j = ICMP_DATA_START;
   // Copy original IP header + first 8 bytes of IP Data
   memcpy(&tx_buf[j+4], &rx_buf[DATALINK_HDR_SIZE], sizeof(struct ip_hdr)+8);			
@@ -852,7 +852,7 @@ void tcp_socket_close(int socket) {
   pSocket->fill_buffer = 0;
 }
 
-#if debug_tcp
+
 
 void tcp_sockets_show(void) {
   int i;
@@ -890,7 +890,43 @@ void tcp_sockets_show(void) {
   }
   printf("------------------------------------------------------------\r\n");
 }
-#endif
+
+void tcp_socket_show(unsigned char index) {
+//  int i;
+  char state[10];
+  struct tcb* pSocket;
+
+  printf("\r\nSocket  State    Loc_Port     Rem_IP        Rem_Port  cTimer\r\n");
+  printf("------------------------------------------------------------\r\n");
+  if(index <TCP_MAX_SOCKETS){
+    pSocket = &tcp_socket[index];
+    switch(pSocket->state) {
+      case 0: sprintf(state, "%s", "Free      "); break;
+      case 1: sprintf(state, "%s", "Closed    "); break;
+      case 2: sprintf(state, "%s", "Listen    "); break;
+      case 3: sprintf(state, "%s", "Syn_Sent  "); break;
+      case 4: sprintf(state, "%s", "Syn_Recvd "); break;
+      case 5: sprintf(state, "%s", "Establish."); break;
+      case 6: sprintf(state, "%s", "Fin_Wait_1"); break;
+      case 7: sprintf(state, "%s", "Fin_Wait_2"); break;
+      case 8: sprintf(state, "%s", "Closing   "); break;
+      case 9: sprintf(state, "%s", "Time_Wait "); break;
+      case 10: sprintf(state, "%s", "Close_Wait"); break;
+      case 11: sprintf(state, "%s", "Last_Ack  "); break;
+	  default: sprintf(state, "%s", "Unknown!  "); break;
+    }
+    if (pSocket->state < 2)
+      printf(" %2d     %s\r\n", index+1, state);													
+    else if (pSocket->state == 2)
+      printf(" %2d     %s   %4d\r\n", index+1, state, pSocket->local_port);													
+    else
+      printf(" %2d     %s   %4d    %d.%d.%d.%d\t%4d   %d\r\n", index+1, state, pSocket->local_port,
+                                             pSocket->remote_ip[0], pSocket->remote_ip[1],
+	        			     pSocket->remote_ip[2], pSocket->remote_ip[3],
+    		          		     pSocket->remote_port, pSocket->cTimer);
+  }
+  printf("------------------------------------------------------------\r\n");
+}
 
 void tcp_conn_open(int socket, char *destipaddr,unsigned short destport) {
   struct tcb* pSocket;
@@ -990,11 +1026,45 @@ int tcp_send_data(int socket, int (*fill_buffer)(int socket,
   // Now call the function
   len = get_max_len(socket);
   pSocket->more_data = pSocket->fill_buffer(socket, &pSocket->position, &len);
+  printf("send more data = %d\n",pSocket->more_data);
   tcp_send(socket, max_len - len);
   return 0;
 }
 
+int tcp_send_data_once(int socket, int (*fill_buffer)(int socket,
+                                   unsigned short *position,unsigned short *len)) {
+  struct tcb* pSocket;
+  timer_typedef tim ;
+  int iSocket = socket-1;
+  int delay ;
+  if (tcp_validate_socket(socket) == TCP_INVALID_SOCKET)
+    return TCP_INVALID_SOCKET;
+  pSocket = &tcp_socket[iSocket];
+  if (pSocket->more_data > 0)		// Is there data to send from previous request?
+    return TCP_SOCKET_ERROR;
+  // Setup the socket
+  pSocket->more_data = 0;
+  pSocket->position = 0;		// start filling the buffer from the beginning
+  pSocket->fill_buffer = fill_buffer;   // save the App´s function to call for more data to fill...
+  // Now call the function
+  do{
+  	  timer_set(&tim, CLOCK_SECOND/50);
+	  len = get_max_len(socket);
+	  pSocket->more_data = pSocket->fill_buffer(socket, &pSocket->position, &len);
+	  printf("send more data = %d\n",pSocket->more_data);
+	  tcp_send(socket, max_len - len);
+	  while(!timer_expired(&tim));
+ 	}while(pSocket->more_data);
+ 
+  return 0;
+}
 
+int tcp_has_more_data(int socket)
+{
+	if (tcp_validate_socket(socket) == TCP_INVALID_SOCKET)
+    	return 0 ;
+	return tcp_socket[socket].more_data ;
+}
 int tcp_listen(int socket) {
   int iSocket = socket-1;
 

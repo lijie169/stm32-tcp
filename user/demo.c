@@ -46,15 +46,44 @@ void LwIP_Config (void)
 int main(void)
 {
 //	uint32_t pre = 0 ;
+	uint8_t* p = 0;
 	SPIx_Init();
 	Led_Init();
+	Usart2_Init(9600);
 //	enc28j60_init(mac);
 	timer_config();
 	stack_init();
+	web_server_init();
+	
+	printf("init success\n");
+//	*p =1 ;
     while (1) 
 	{
+//		printf("init success\r\n");
 		stack_process();
+//		app_process();
+		Led_Process();
+		shell_help();
  	}
 
  return 0 ;
+}
+
+void HardFault_Handler_C(unsigned int* hardfault_args)
+{
+    printf("R0    = 0x%.8X\n",hardfault_args[0]);         
+    printf("R1    = 0x%.8X\n",hardfault_args[1]);         
+    printf("R2    = 0x%.8X\n",hardfault_args[2]);         
+    printf("R3    = 0x%.8X\n",hardfault_args[3]);         
+    printf("R12   = 0x%.8X\n",hardfault_args[4]);         
+    printf("LR    = 0x%.8X\n",hardfault_args[5]);         
+    printf("PC    = 0x%.8X\n",hardfault_args[6]);         
+    printf("PSR   = 0x%.8X\n",hardfault_args[7]);         
+    printf("BFAR  = 0x%.8X\n",*(unsigned int*)0xE000ED38);
+    printf("CFSR  = 0x%.8X\n",*(unsigned int*)0xE000ED28);
+    printf("HFSR  = 0x%.8X\n",*(unsigned int*)0xE000ED2C);
+    printf("DFSR  = 0x%.8X\n",*(unsigned int*)0xE000ED30);
+    printf("AFSR  = 0x%.8X\n",*(unsigned int*)0xE000ED3C);
+    printf("SHCSR = 0x%.8X\n",SCB->SHCSR);                
+    while (1);
 }

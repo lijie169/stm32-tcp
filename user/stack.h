@@ -20,7 +20,7 @@ For more information and updates, please visit www.embeddedinternet.org
 #define TCP_DATA_MAX    (PACKET_BUF_SIZE - DATALINK_HDR_SIZE - 20 - 20)   	// sizeof(struct ip_hdr)=20 ; sizeof(struct tcp_hdr)=20
 
 
-#define PACKET_BUF_SIZE	1514
+#define PACKET_BUF_SIZE	1490
 #define DATALINK_HDR_SIZE     14
 
 extern char rx_buf[];

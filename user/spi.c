@@ -3,8 +3,14 @@
 #include "stm32f10x_gpio.h"
 #include "stm32f10x_rcc.h"
 #include "stm32f10x_usart.h"
+#include "timer.h"
+FILE __stdout;  
+#define USART_TRY_TIMES 10000
 
-
+extern   uint16_t current_clock ;
+uint8_t usart_tx_buf[0xFF]= {0};
+uint8_t usart_rx_buf[0xFF]= {0};
+static uint8_t usart_tx_size = 0 ;
 void Usart2_Init( uint32_t BaudRate)
 {
   
@@ -41,8 +47,85 @@ void Usart2_Init( uint32_t BaudRate)
     USART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx; //????,???????
   
     USART_Init(USART2, &USART_InitStructure);  // ??STM32?USART???????
+    USART_Cmd(USART2, ENABLE);
     
 }
+
+uint8_t usart_recv_data(void)
+{
+	uint8_t count = 0 ;
+	uint16_t cc = 0 ;
+	uint8_t ch;
+	if(USART_GetFlagStatus(USART2, USART_FLAG_RXNE) != RESET)
+	{
+		while(USART_GetFlagStatus(USART2, USART_FLAG_RXNE) != RESET)
+		{
+			ch =  (uint8_t)(USART2->DR & 0xFF);
+			usart_rx_buf[count++] = ch ;
+
+			if(ch == '\n')
+				break ;
+			if(count >= 0xFE)
+				break ;
+			while(USART_GetFlagStatus(USART2, USART_FLAG_RXNE) == RESET)
+			{
+				cc++ ;
+				if(cc > USART_TRY_TIMES)
+				{
+					break ;
+				}
+			}
+
+			
+		//	printf("wait %u times\n",cc);
+			cc = 0 ;
+		
+		}
+		
+	}
+	
+	usart_rx_buf[count] = '\0';
+	return count ;
+}
+   
+//??_sys_exit()??????????    
+_sys_exit(int x) 
+{ 
+	x = x; 
+} 
+/* ???fputc?? ????MicroLIB??????fputc???? */  
+int fputc(int ch, FILE *f)
+{
+	uint8_t usize  ;
+	usart_tx_buf[usart_tx_size++] = ch ;
+	
+	if(usart_tx_size == 0xFE || ch == '\n')
+	{
+		usize = 0 ;
+		while(usize < usart_tx_size)
+		{
+	    	while (USART_GetFlagStatus(USART2, USART_FLAG_TC) == RESET)
+	    	{    	
+	    	}
+			
+			
+			USART_SendData(USART2, (uint8_t) usart_tx_buf[usize]);
+			usize ++ ;
+		}
+
+		usart_tx_size = 0 ;
+	}
+    return ch;
+}
+/*
+??????putchar
+?????? int putchar(int ch),??stdio.h??????
+ #define putchar(c) putc(c, stdout)
+*/
+
+int ferror(FILE *f) {  
+    return -1 ;//return EOF;  
+} 
 					  
 //串行外设接口SPI的初始化，SPI配置成主模式							  
 void Led_Init(void)
@@ -58,11 +141,28 @@ void Led_Init(void)
 	GPIO_SetBits(GPIOF,GPIO_Pin_6);
 }
 
-void Led_Shine(void)
+void Led_Shine(uint8_t state)
 {
-	static uint8_t state = 0 ;
+	
 	GPIO_WriteBit(GPIOF,GPIO_Pin_6,state);
-	state = !state ;
+	
+}
+
+void Led_Process(void)
+{
+
+	static uint8_t state = 0 ;
+	static uint16_t count = 0 ;
+	//count++;
+	//uint16_t tmp = (uint16_t)(count + ) ; 
+	if((uint16_t)(current_clock - count) >=  CLOCK_SECOND/2)
+	{
+		Led_Shine(state);
+		count = current_clock ;
+		state = !state ;
+//		printf("hello,world\r\n");
+//		printf("time is %u\r\n",current_clock);
+	}
 }
 void SPIx_Init(void)
 {
@@ -127,14 +227,6 @@ u8 SPIx_ReadWriteByte(u8 TxData)
 	}	  						    
 	return SPI1->DR;          //返回收到的数据				    
 }
-
-
-
-
-
-
-
-
 
 
 

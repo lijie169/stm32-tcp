@@ -53,8 +53,11 @@ void frame_process(void) {
       arp_process();
       break;
     case IP_PROTOCOL:
-        ip_process();
+      ip_process();
       break;
+	default :
+	 	printf("unkonwn protocol %x\n",HTONS(FRAMEr->protocol));
+		break;
   }
 }
 

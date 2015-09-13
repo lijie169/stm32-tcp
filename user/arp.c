@@ -17,6 +17,7 @@ For more information and updates, please visit www.embeddedinternet.org
 #include <string.h>
 #include <stdio.h>	
 
+#define debug_arp 0
 
 struct arp_entry {
   char 			proaddr[4];
@@ -195,7 +196,7 @@ void arp_process(void) {
   }
 }
 
-#if debug_arp
+#if 1
 void arp_show_table(void) {
   int i;
 

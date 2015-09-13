@@ -1,5 +1,5 @@
 /******************************************************************************************
-   Stack.h (v1.0)
+   App.h (v1.0)
 -------------------------------------------------------------------------------------
 This code is from the book:
 "Embedded Internet: TCP/IP Basics, Implementation and Applications" by Sergio Scaglia
@@ -10,32 +10,29 @@ purposes.  For commercial use, please contact me at sscaglia@intramarket.com.ar
 For more information and updates, please visit www.embeddedinternet.org
 ******************************************************************************************/
 
-#include "Stack.h"
-#ifdef ETHERNET
-  #include "ethernet.h"
-  #include "arp.h"
+#ifndef __APP_H
+#define __APP_H
+
+extern char valve1, valve2, heater, cycle, state;
+extern unsigned int liquid, temp;
+
+// state values
+#define STOP	0
+#define STARTED	1
+#define FILL	2
+#define HEAT	3
+#define EMPTY	4
+
+// valve1, valve2, and heater values
+#define OFF		0
+#define	ON		1
+
+// cycle values
+#define NO		0
+#define YES		1
+
+void app_init(void);
+void app_process(void);
+
 #endif
-#include "udp.h"
-#include "tcp.h"
 
-void stack_init(void) {
-
-  #ifdef ETHERNET
-    ethernet_init();
-    arp_init();		
-    arp_request(Gateway);
-  #endif
-  	udp_init();
-  	//my_udp_init();
-	tcp_init();
-	//my_tcp_service_init();
-}
-
-
-void stack_process(void) {
-  #ifdef ETHERNET
-    ethernet_poll();
-    arp_poll();
-  #endif
-    tcp_poll();
-}

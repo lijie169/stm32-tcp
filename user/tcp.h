@@ -41,6 +41,6 @@ void tcp_conn_close(int socket);
 short tcp_get_port(int socket);
 int tcp_send_data(int socket, int (*fill_buffer)(int socket, unsigned short * position, unsigned short * len));
 int tcp_listen(int socket);
-
+void tcp_socket_show(unsigned char index);
 #endif
 
