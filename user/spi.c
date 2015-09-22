@@ -1,15 +1,18 @@
+#include <stdio.h>
 #include "spi.h"
 #include "stm32f10X_spi.h"
 #include "stm32f10x_gpio.h"
 #include "stm32f10x_rcc.h"
 #include "stm32f10x_usart.h"
 #include "timer.h"
+#include "file_adapter.h"
+
 FILE __stdout;  
 #define USART_TRY_TIMES 10000
-
+#define USART_BUFF_SIZE 0xFF 
 extern   uint16_t current_clock ;
-uint8_t usart_tx_buf[0xFF]= {0};
-uint8_t usart_rx_buf[0xFF]= {0};
+uint8_t usart_tx_buf[USART_BUFF_SIZE]= {0};
+uint8_t usart_rx_buf[USART_BUFF_SIZE]= {0};
 static uint8_t usart_tx_size = 0 ;
 void Usart2_Init( uint32_t BaudRate)
 {
@@ -51,9 +54,11 @@ void Usart2_Init( uint32_t BaudRate)
     
 }
 
-uint8_t usart_recv_data(void)
+
+
+int32_t usart_get_buff(int8_t* data,int32_t maxlen)
 {
-	uint8_t count = 0 ;
+	int32_t count = 0 ;
 	uint16_t cc = 0 ;
 	uint8_t ch;
 	if(USART_GetFlagStatus(USART2, USART_FLAG_RXNE) != RESET)
@@ -61,11 +66,11 @@ uint8_t usart_recv_data(void)
 		while(USART_GetFlagStatus(USART2, USART_FLAG_RXNE) != RESET)
 		{
 			ch =  (uint8_t)(USART2->DR & 0xFF);
-			usart_rx_buf[count++] = ch ;
+			data[count++] = ch ;
 
 			if(ch == '\n')
 				break ;
-			if(count >= 0xFE)
+			if(count >= maxlen )
 				break ;
 			while(USART_GetFlagStatus(USART2, USART_FLAG_RXNE) == RESET)
 			{
@@ -84,34 +89,53 @@ uint8_t usart_recv_data(void)
 		
 	}
 	
-	usart_rx_buf[count] = '\0';
+	//data[count] = '\0';
 	return count ;
-}
-   
+}   
 //??_sys_exit()??????????    
 _sys_exit(int x) 
 { 
 	x = x; 
 } 
+
+
+
 /* ???fputc?? ????MicroLIB??????fputc???? */  
+int usart_write(char*buff, int size)
+{
+	int loop = 0 ;
+
+	while(loop < size)
+	{
+		while (USART_GetFlagStatus(USART2, USART_FLAG_TC) == RESET)
+		{    	
+		}
+		
+		
+		USART_SendData(USART2,  buff[loop]);
+		loop ++ ;
+	}
+
+
+    return loop;
+}
+
+
+void install_uart_dev(void)
+{
+	unregister(0);
+	register_open(usart_get_buff, usart_write);
+}
+
+
 int fputc(int ch, FILE *f)
 {
 	uint8_t usize  ;
 	usart_tx_buf[usart_tx_size++] = ch ;
 	
-	if(usart_tx_size == 0xFE || ch == '\n')
+	if(usart_tx_size == USART_BUFF_SIZE - 1 || ch == '\n')
 	{
-		usize = 0 ;
-		while(usize < usart_tx_size)
-		{
-	    	while (USART_GetFlagStatus(USART2, USART_FLAG_TC) == RESET)
-	    	{    	
-	    	}
-			
-			
-			USART_SendData(USART2, (uint8_t) usart_tx_buf[usize]);
-			usize ++ ;
-		}
+		output(usart_tx_buf,usart_tx_size,0);
 
 		usart_tx_size = 0 ;
 	}
@@ -128,42 +152,31 @@ int ferror(FILE *f) {
 } 
 					  
 //串行外设接口SPI的初始化，SPI配置成主模式							  
-void Led_Init(void)
+
+
+void Key_Init(void)
 {
-	GPIO_InitTypeDef GPIO_InitStructure;
-	
-	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOF, ENABLE);
-	
-	GPIO_InitStructure.GPIO_Pin =  GPIO_Pin_6;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
-	GPIO_Init(GPIOF, &GPIO_InitStructure);
-	GPIO_SetBits(GPIOF,GPIO_Pin_6);
+    GPIO_InitTypeDef GPIO_InitStructure;
+//    EXTI_InitTypeDef EXTI_InitStructure;
+//    NVIC_InitTypeDef NVIC_InitStructure;
+
+    /* Enable the BUTTON Clock */
+    /* 使能KEY按键对应GPIO的Clock时钟 */
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOD | RCC_APB2Periph_AFIO, ENABLE);
+
+    /* Configure Button pin as input floating */
+    /* 初始化KEY按键的GPIO管脚，配置为带上拉的输入 */
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3;
+    GPIO_Init(GPIOD, &GPIO_InitStructure);
 }
 
-void Led_Shine(uint8_t state)
+uint32_t Key_Down(void)
 {
-	
-	GPIO_WriteBit(GPIOF,GPIO_Pin_6,state);
-	
+    /* 返回读取按键所在GPIO管脚的状态，看看按键是否有被按下 */
+    return GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_3) == 0;
 }
 
-void Led_Process(void)
-{
-
-	static uint8_t state = 0 ;
-	static uint16_t count = 0 ;
-	//count++;
-	//uint16_t tmp = (uint16_t)(count + ) ; 
-	if((uint16_t)(current_clock - count) >=  CLOCK_SECOND/2)
-	{
-		Led_Shine(state);
-		count = current_clock ;
-		state = !state ;
-//		printf("hello,world\r\n");
-//		printf("time is %u\r\n",current_clock);
-	}
-}
 void SPIx_Init(void)
 {
 	SPI_InitTypeDef  SPI_InitStructure;

@@ -26,6 +26,7 @@ void stack_init(void) {
     arp_request(Gateway);
   #endif
   	udp_init();
+  	
   	//my_udp_init();
 	tcp_init();
 	//my_tcp_service_init();

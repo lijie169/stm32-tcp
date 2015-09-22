@@ -752,7 +752,7 @@ void tcp_process(unsigned short len) {
 	      pSocket->remote_ip[3] == IPr->srcipaddr[3]) {
 	  		
 	      // it is a re-transmission of a previous SYN
-	      // we don´t have to create another socket
+	      // we don't have to create another socket
 	      // the timeout of our SYN+ACK will re-send the segment
 	    return;
 	  }		  		

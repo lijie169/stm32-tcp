@@ -23,7 +23,7 @@ For more information and updates, please visit www.embeddedinternet.org
 #include <stdio.h>
 #include <string.h>
 
-
+ #define debug_udp 1
 #define UDPr  ((struct udp_hdr *)&rx_buf[sizeof(struct ip_hdr) + DATALINK_HDR_SIZE])	
 #define UDPt  ((struct udp_hdr *)&tx_buf[sizeof(struct ip_hdr) + DATALINK_HDR_SIZE])	
 
@@ -65,7 +65,10 @@ void udp_display(void) {
   printf("Checksum:          %04x\n", HTONS(UDPr->udpchksum));
   printf("Data:\n");
   for (i=0; i<(HTONS(UDPr->totlen)-8); i++) {
-    printf("%c", rx_buf[UDP_DATA_START+i]);			
+    printf("%02x ", (unsigned char)rx_buf[UDP_DATA_START+i]);	
+	if(0 == (i+1) % 16)
+		printf("\n");
+		
   }
   printf("\n-------------------------------------------\n");
 }
@@ -112,7 +115,7 @@ void udp_process(unsigned short len) {
   int iSocket, j;
   struct ucb* pSocket;
 
-#if debug_udp
+#if 0
   udp_display();
 #endif //debug_udp
 
@@ -133,7 +136,7 @@ void udp_process(unsigned short len) {
       #if debug_udp
 	
 	  printf("UDP: Bad Checksum %04x (it should be %04x)\n",chksum1, chksum2);
-
+	  udp_display();
 	  #endif
       return;											// returns if chksum failed!
     }

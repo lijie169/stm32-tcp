@@ -247,11 +247,11 @@
 /* 接收缓冲区起始地址 */
 #define RXSTART_INIT          0x0
 /* 接收缓冲区停止地址 */
-#define RXSTOP_INIT           (0x1FFF-0x0600-1)
+#define RXSTOP_INIT           (0x1FFF-0x0600)
 /* 发送缓冲区起始地址 发送缓冲区大小约1500字节*/
-#define TXSTART_INIT          (0x1FFF-0x0600)
+#define TXSTART_INIT          (0x1FFF-0x05ff)
 /* 发送缓冲区停止地址 */
-#define TXSTOP_INIT           0x1FFF
+#define TXSTOP_INIT           (0x1FFF - 9)
 
 /* 以太网报文最大长度 */
 #define   MAX_FRAMELEN        1500        //最大长度为1518

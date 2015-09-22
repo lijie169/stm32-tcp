@@ -52,7 +52,7 @@ struct pseudo_hdr {		      // Pseudo Header for UDP and TCP Chksum Calculations
 
 void ip_process(void);
 void ip_send(char, char *, unsigned short);
-int chksum16(void *, short, int, char);
+unsigned int chksum16(void *, short, int, char);
 
 #endif
 

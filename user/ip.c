@@ -48,9 +48,9 @@ void ip_display(void) {
 /***************************************/
 /*   IP Public Functions               */
 /***************************************/
-int chksum16(void *buf1, short len, int chksum, char complement) {
+unsigned int chksum16(void *buf1, short len, int chksum, char complement) {
   unsigned short * buf = buf1;
-  int chksum16;
+  unsigned int chksum16;
 
   while(len > 0) {	
     if (len == 1)
@@ -62,7 +62,10 @@ int chksum16(void *buf1, short len, int chksum, char complement) {
     len -=2;
   }
   if (complement)
-    return (~(chksum + ((chksum & 0xFFFF0000) >> 16))&0xFFFF);
+  {
+	chksum = (chksum&0xffff)+(chksum>>16);
+	return (~(chksum + ((chksum & 0xFFFF0000) >> 16))&0xFFFF);
+  }
   return chksum;
 }
 

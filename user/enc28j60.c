@@ -403,19 +403,11 @@ void enc28j60_init(unsigned char* mac_addr)
 void enc28j60_packet_send(char* packet,int len )
 {
 	short i ;
+	unsigned short time ;
+	
 	/* 查询发送逻辑复位位 */
 	while((enc28j60_read(ECON1) & ECON1_TXRTS)!= 0);
 
-	if( (enc28j60_read(EIR) & EIR_TXERIF) )
-	{
-		enc28j60_setbank(ECON1);
-        enc28j60_writeop(ENC28J60_BIT_FIELD_SET, ECON1, ECON1_TXRST);
-		for(i = 0 ; i < 20000 ; i++);
-        enc28j60_writeop(ENC28J60_BIT_FIELD_CLR, ECON1, ECON1_TXRST);
-    }
-
-
-	
     /* 设置发送缓冲区起始地址 */    
 	enc28j60_write(EWRPTL, TXSTART_INIT & 0xFF);
 	enc28j60_write(EWRPTH, TXSTART_INIT >> 8);
@@ -436,15 +428,18 @@ void enc28j60_packet_send(char* packet,int len )
     /* 复位发送逻辑的问题。参见 Rev. B4 Silicon Errata point 12. */
 	if( (enc28j60_read(EIR) & EIR_TXERIF) )
 	{
-		/**
+		
 		enc28j60_setbank(ECON1);
         enc28j60_writeop(ENC28J60_BIT_FIELD_SET, ECON1, ECON1_TXRST);
+		/**
 		for(i = 0 ; i < 20000 ; i++);
         enc28j60_writeop(ENC28J60_BIT_FIELD_CLR, ECON1, ECON1_TXRST);
         **/
-        enc28j60_writeop(ENC28J60_BIT_FIELD_CLR, EIR, EIR_TXERIF);
-        enc28j60_writeop(ENC28J60_BIT_FIELD_CLR, ESTAT, ESTAT_TXABRT);
+ //       enc28j60_writeop(ENC28J60_BIT_FIELD_CLR, EIR, EIR_TXERIF);
+//        enc28j60_writeop(ENC28J60_BIT_FIELD_CLR, ESTAT, ESTAT_TXABRT);
     }
+	time = clock_time();
+	while(clock_time() - time < 1);
 }
 
 /*
@@ -495,14 +490,15 @@ void enc28j60_start_send( void )
     /* 复位发送逻辑的问题。参见 Rev. B4 Silicon Errata point 12. */
 	if( (enc28j60_read(EIR) & EIR_TXERIF) )
 	{
-		/*
+
 		enc28j60_setbank(ECON1);
         enc28j60_writeop(ENC28J60_BIT_FIELD_SET, ECON1, ECON1_TXRST);
+		/*
 		for(i = 0 ; i < 10000 ; i++);
         enc28j60_writeop(ENC28J60_BIT_FIELD_CLR, ECON1, ECON1_TXRST);
         */
-        enc28j60_writeop(ENC28J60_BIT_FIELD_CLR, EIR, EIR_TXERIF);
-        enc28j60_writeop(ENC28J60_BIT_FIELD_CLR, ESTAT, ESTAT_TXABRT);
+ //       enc28j60_writeop(ENC28J60_BIT_FIELD_CLR, EIR, EIR_TXERIF);
+//        enc28j60_writeop(ENC28J60_BIT_FIELD_CLR, ESTAT, ESTAT_TXABRT);
     }
 }
 
